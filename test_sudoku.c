@@ -1,6 +1,3 @@
-#ifndef TEST_SUDOKU_H
-#define TEST_SUDOKU_H
-
 #include <check.h>
 #include "solver.h"
 
@@ -281,5 +278,3 @@ Suite * solver_suite(void) {
 
   return s;
 }
-
-#endif

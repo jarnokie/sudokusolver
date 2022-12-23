@@ -29,6 +29,16 @@ void init_ec_matrix(bool mat[729][324]) {
   }
 }
 
+
+/**
+ * https://en.wikipedia.org/wiki/Knuth%27s_Algorithm_X
+ */
+void knuths_alg_x(bool ** mat, int height, int width, bool rows[], bool cols[], IntList * selected) {
+  
+  
+}
+
+
 /**
  * https://en.wikipedia.org/wiki/Exact_cover#Sudoku
  */
@@ -41,31 +51,9 @@ bool exact_cover(Sudoku * const sudoku) {
   bool m[729][324];
   init_ec_matrix(m);
 
-  IntList * locked = NULL;
+  IntList * locked = list_new();
 
-  for (int row = 0; row < 9; row++) {
-    for (int col = 0; col < 9; col++) {
-      if (sudoku->locked[row][col]) {
-        int const n = sudoku->grid[row][col];
-        if (locked == NULL) {
-          locked = list_new(row * 81 + col * 9 + n-1);
-        } else {
-          list_add(locked, row * 81 + col * 9 + n-1);
-        }
-      }
-    }
-  }
-
-  list_print(locked);
-
-  IntList const * iter = locked;
-  while(iter != NULL) {
-    int row, col, n;
-    matrix_row_to_row_col_n(iter->val, &row, &col, &n);
-    printf("%d,%d %d\n", row, col, n);
-
-    iter = iter->next;
-  }
+  // TODO
 
   list_free(locked); locked = NULL;
 

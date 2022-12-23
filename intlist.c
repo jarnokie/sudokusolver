@@ -3,19 +3,20 @@
 #include "intlist.h"
 
 int list_length(IntList const * const list) {
-    IntList iter = *list;
-    int count = 1;
-    while (iter.next != NULL) {
-        iter = *iter.next;
+    IntListIter * iter = list->first;
+    int count = 0;
+    while (iter != NULL) {
+        iter = iter->next;
         count++;
     }
     return count;
 }
 
 
-IntList * get_last(IntList * list) {
-    IntList * iter = list;
-    while (iter->next != NULL) {
+IntListIter * get_last(IntList * list) {
+    IntListIter * iter = list->first;
+    while (iter != NULL) {
+        if (iter->next == NULL) return iter;
         iter = iter->next;
     }
     return iter;
@@ -28,36 +29,53 @@ IntList * get_last(IntList * list) {
  * @param value Value to add to the end of the list
  */
 void list_add(IntList * const list, int const value) {
-    IntList * last = get_last(list);
-    IntList * new = list_new(value);
-    last->next = new;
+    IntListIter * last = get_last(list);
+
+    IntListIter * new = malloc(sizeof(IntListIter));
     new->previous = last;
+    new->next = NULL;
+    new->val = value;
+
+    if (last != NULL) {
+        last->next = new;
+    } else {
+        list->first = new;
+    }
 }
 
 
-IntList * list_new(int const initial) {
+IntList * list_new() {
     IntList * new = malloc(sizeof(IntList));
-    new->next = NULL;
-    new->previous = NULL;
-    new->val = initial;
+    list_init(new);
     return new;
 }
 
 
-void list_free(IntList * list) {
-    IntList * iter;
-    IntList * next = list;
-    do {
-        iter = next;
-        next = iter->next;
-        free(iter);
-    } while(next != NULL);
+void list_init(IntList * list) {
+    list->first = NULL;
 }
 
 
-IntList * list_get_iter(IntList const * list, int const index) {
+/**
+ * Frees all of the list items.
+ * 
+ * @param list Pointer to the list to be freed;
+ */
+void list_free(IntList * list) {
+    IntListIter * iter;
+    IntListIter * next = list->first;
+    while(next != NULL) {
+        iter = next;
+        next = iter->next;
+        free(iter);
+    };
+    list->first = NULL;
+}
+
+
+IntListIter * list_get_iter(IntList const * list, int const index) {
     int i = index;
-    IntList const * iter = list;
+    IntListIter const * iter = list->first;
     do {
         if (iter == NULL) {
             return NULL;
@@ -80,8 +98,25 @@ IntList * list_get_iter(IntList const * list, int const index) {
  * @returns Index to get, 0 if invalid index
  */
 int list_get(IntList const * list, int const index) {
-    IntList * iter = list_get_iter(list, index);
+    IntListIter * iter = list_get_iter(list, index);
     return iter == NULL ? 0 : iter->val;
+}
+
+
+IntListIter * list_del_iter(IntListIter * iter, int const index) {
+    if (iter == NULL) return NULL;
+    if (index > 0) {
+        list_del_iter(iter->next, index - 1);
+        return iter;
+    }
+    IntListIter * previous = iter->previous;
+    IntListIter * next = iter->next;
+    if (previous != NULL) {
+        previous->next = next;
+        if (next != NULL) next->previous = previous;
+    } else if (next != NULL) {
+        next->previous = previous;
+    }
 }
 
 
@@ -92,22 +127,13 @@ int list_get(IntList const * list, int const index) {
  * @param list Pointer to the list 
  * @returns Pointer to the list, null if list empty
  */
-IntList * list_del(IntList * list, int const index) {
-    if (index > 0 && list->next != NULL) {
-        list_del(list->next, index - 1);
-        return list;
-    }
-    if (list->next != NULL) {
-        list->val = list->next->val;
-        list->next = list_del(list->next, 0);
-        return list;
-    }
-    free(list);
-    return NULL;
+void list_del(IntList * list, int const index) {
+    list->first = list_del_iter(list->first, index);
 }
 
+
 void list_print(IntList const * list) {
-    IntList const * iter = list;
+    IntListIter const * iter = list->first;
     printf("[");
     char sep = ' ';
     while(iter != NULL) {

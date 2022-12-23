@@ -28,20 +28,6 @@ void initialize_sudoku(Sudoku * const);
 void print_sudoku(Sudoku const * const);
 
 /**
- * Checks if the Sudoku state is correct.
- *
- * @param sudoku Pointer to the Sudoku struct.
- */
-bool is_valid(Sudoku const * const sudoku);
-bool valid_row(Sudoku const * const sudoku, const int row);
-bool valid_column(Sudoku const * const sudoku, const int column);
-bool valid_box(Sudoku const * const sudoku, const int row, const int column);
-
-int column_available(Sudoku const * const sudoku, const int col);
-int row_available(Sudoku const * const sudoku, const int row);
-int box_available(Sudoku const * const sudoku, const int row, const int col);
-
-/**
  * Solves the given sudoku with the brute force 'backtrack' algorithm.
  * A solution is guaranteed for valid problems.
  * 
@@ -50,5 +36,23 @@ int box_available(Sudoku const * const sudoku, const int row, const int col);
  * @param col Starting column for the algorithm. Usually 0.
  */
 bool backtrack(Sudoku * const sudoku, int const row, int const col);
+
+/**
+ * Checks if a sudoku is valid. 
+ * 
+ * @param sudoku Pointer to a sudoku struct
+ * @returns Is the given sudoku valid
+ */
+bool is_valid(Sudoku const * const sudoku);
+
+#ifdef UNIT_TEST
+bool valid_row(Sudoku const * const sudoku, const int row);
+bool valid_column(Sudoku const * const sudoku, const int column);
+bool valid_box(Sudoku const * const sudoku, const int row, const int column);
+
+int column_available(Sudoku const * const sudoku, const int col);
+int row_available(Sudoku const * const sudoku, const int row);
+int box_available(Sudoku const * const sudoku, const int row, const int col);
+#endif
 
 #endif
