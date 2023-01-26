@@ -5,3 +5,6 @@ solver: $(SOURCES:.c=.o) main.c
 
 test: $(SOURCES:.c=.o) test*.c
 	gcc -o $@ -Wall -Wextra -DUNIT_TEST $^ -lcheck -lm
+
+clean:
+	$(RM) *.o test.exe test solver.exe solver
