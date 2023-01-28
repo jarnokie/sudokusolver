@@ -6,6 +6,9 @@
 #include "exactcover.h"
 #include "intlist.h"
 
+/**
+ * Helper funtion for getting the Wikipedia problem values.
+ */
 bool get_test_problem_value(int const index)
 {
   bool test_problem[] = {
@@ -57,6 +60,15 @@ bool get_test_problem_value(int const index)
 
 START_TEST(test_knuths_algorithm_x)
 {
+  // Try solving the Knuth's Agorith X Wikipedia page problem.
+  //    1 2 3 4 5 6 7
+  // A: 1 0 0 1 0 0 1
+  // B: 1 0 0 1 0 0 0
+  // C: 0 0 0 1 1 0 1
+  // D: 0 0 1 0 1 1 0
+  // E: 0 1 1 0 0 1 1
+  // F: 0 1 0 0 0 0 1
+  // Correct solution is B, D, F = 1, 3, 5
   int const row_count = 6, col_count = 7;
   bool **mat = (bool **)malloc(sizeof(bool *) * row_count);
 
@@ -76,6 +88,12 @@ START_TEST(test_knuths_algorithm_x)
 
   knuths_alg_x(mat, row_count, col_count, rows, cols, selected);
 
+  ck_assert_int_eq(list_length(selected), 3);
+  ck_assert_int_eq(list_contains(selected, 1), true);
+  ck_assert_int_eq(list_contains(selected, 3), true);
+  ck_assert_int_eq(list_contains(selected, 5), true);
+
+  // TODO remove debug print:
   printf("selected:\n");
   IntListIter *iter = selected->first;
   while (iter != NULL)
@@ -89,12 +107,14 @@ START_TEST(test_knuths_algorithm_x)
     printf("\n");
     iter = iter->next;
   }
+  // End of debug print.
 
   for (int row = 0; row < row_count; row++)
   {
     free(mat[row]);
   }
   free(mat);
+  mat = NULL;
 }
 END_TEST
 

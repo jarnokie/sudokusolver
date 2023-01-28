@@ -4,6 +4,14 @@
 #include "intlist.h"
 #include "solver.h"
 
+void copy_arr(bool const from[], bool to[], int const n)
+{
+  for (int i = 0; i < n; i++)
+  {
+    to[i] = from[i];
+  }
+}
+
 void matrix_row_to_row_col_n(int const m_row, int *row, int *col, int *n)
 {
   *row = m_row / 81;
@@ -106,82 +114,129 @@ void print_mat(bool const **mat, int const height, int const width, bool const r
 
 /**
  * https://en.wikipedia.org/wiki/Knuth%27s_Algorithm_X
+ *
+ * Solves the matrix 'mat' with the Knuth's Algorithm X. Selected rows are set to the 'selected' list.
+ * To pre-select rows add them to the selected list and mark them removed in the rows array.
+ *
+ * @param mat Matrix to solve.
+ * @param height Height of the matrix.
+ * @param width Width of the matrix.
+ * @param rows Removed rows.
+ * @param cols Removed columns.
+ * @param selected List of selected rows.
+ * @returns True if matrix was solved, false otherwise.
  */
 bool knuths_alg_x(bool **mat, int const height, int const width,
                   bool rows[], bool cols[], IntList *const selected)
 {
+  // Check for empty matrix = solved
+  bool empty = true;
+  for (int i = 0; i < height; i++)
+  {
+    if (!rows[i])
+    {
+      empty = false;
+      break;
+    }
+  }
+  if (!empty)
+  {
+    for (int i = 0; i < width; i++)
+    {
+      if (!cols[i])
+      {
+        empty = false;
+        break;
+      }
+    }
+  }
+  if (empty)
+    return true;
 
-  printf("current mat:\n");
-  print_mat((const bool **)mat, height, width, rows, cols);
-
-  IntList *const col_min = list_new();
-  // This should look for min...
+  // Find the columns with least selected values.
+  IntList *col_min = list_new();
   int col_min_val = find_col_min(col_min, (const bool **)mat, height, width, rows, cols);
 
-  printf("min: ");
-  list_print(col_min);
-
+  // If one of the colums has no values = unsolvable
   if (col_min_val == 0)
-  {
-    printf("Column min = 0\n");
     return false;
-  }
 
+  // Start trying to solve with each of the selected columns.
+  // Step 1 in the Wikipedia page algorithm.
   for (int col_index = 0; col_index < list_length(col_min); col_index++)
   {
     int const col = list_get(col_min, col_index);
-    printf("Selected col: %d\n", col);
+
+    // Copy removed rows and cols so that they can be reset if solver path fails.
+    bool rows_old[height];
+    bool cols_old[width];
+    copy_arr(rows, rows_old, height);
+    copy_arr(cols, cols_old, width);
 
     // Find rows which have 1 set for the selected column
     IntList *row_indices = list_new();
     for (int row = 0; row < height; row++)
     {
-      if (rows[row])
+      if (rows[row]) // Skip removed rows
         continue;
       if (mat[row][col])
         list_add(row_indices, row);
     }
-    // TODO select non-determinastically
-    int const row_index = list_get(row_indices, 0);
-    printf("Selecting row: %d\n", row_index);
-    list_add(selected, row_index);
 
-    // Remove columns that the row has set
-    for (int col = 0; col < width; col++)
+    // Step 2 in the Wikipedia page algorithm.
+    for (int i = 0; i < list_length(row_indices); i++)
     {
-      if (cols[col])
-        continue;
-      if (mat[row_index][col])
+      int const row_index = list_get(row_indices, i);
+      rows[row_index] = true;
+
+      list_add(selected, row_index);
+
+      // Remove columns of the selected row and the rows of the removed columns.
+      for (int col = 0; col < width; col++)
       {
-        printf("Removing column %d\n", col);
-        cols[col] = true;
-        for (int r = 0; r < height; r++)
+        if (cols[col])
+          continue;
+        if (mat[row_index][col])
         {
-          if (mat[r][col])
+          // Wiki page step 4.
+          cols[col] = true;
+          for (int r = 0; r < height; r++)
           {
-            if (!rows[r])
-              printf("Removing row %d\n", r);
-            rows[r] = true;
+            if (mat[r][col])
+            {
+              rows[r] = true;
+            }
           }
         }
       }
+
+      // Wiki page step 5.
+      bool const ret = knuths_alg_x(mat, height, width, rows, cols, selected);
+      if (ret)
+      {
+        // Free before return.
+        list_free(col_min);
+        free(col_min);
+        col_min = NULL;
+        return true;
+      }
+
+      // Return selected, rows and cols as they were in the beginning of the loop
+      list_del(selected, list_length(selected) - 1);
+      copy_arr(rows_old, rows, height);
+      copy_arr(cols_old, cols, width);
     }
 
     // Free created lists
     list_free(row_indices);
     free(row_indices);
     row_indices = NULL;
-
-    bool const ret = knuths_alg_x(mat, height, width, rows, cols, selected);
-    if (ret)
-      return true;
-
-    // TODO: return selected, rows and cols as they were in the beginning of the col loop
-    return false;
   }
 
-  printf("current mat:\n");
-  print_mat((const bool **)mat, height, width, rows, cols);
+  // Free before return.
+  list_free(col_min);
+  free(col_min);
+  col_min = NULL;
 
   return false;
 }
