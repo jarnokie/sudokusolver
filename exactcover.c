@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "intlist.h"
 #include "solver.h"
+#include "exactcover.h"
 
 void copy_arr(bool const from[], bool to[], int const n)
 {
@@ -12,19 +13,43 @@ void copy_arr(bool const from[], bool to[], int const n)
   }
 }
 
-void matrix_row_to_row_col_n(int const m_row, int *row, int *col, int *n)
+void remove_rows_cols(bool **mat, bool *rows, bool *cols, int const height, int const width, int const row)
 {
-  *row = m_row / 81;
-  *col = (m_row % 81) / 9;
-  *n = (m_row % 9) + 1;
+  for (int c = 0; c < width; c++)
+  {
+    if (mat[row][c])
+    {
+      cols[c] = true;
+      for (int r = 0; r < height; r++)
+      {
+        if (mat[r][c])
+          rows[r] = true;
+      }
+    }
+  }
 }
 
-void init_ec_matrix(bool mat[729][324])
+void ec_row_to_row_col_n(int const mat_row, int *row, int *col, int *n)
+{
+  *n = (mat_row % 9) + 1;
+  *col = (mat_row % 81) / 9;
+  *row = mat_row / 81;
+}
+
+/**
+ * Initializes the matrix 'mat' with the sudoku 9x9 constraints.
+ * Each row represents a row-column-number combination -> 9 * 9 * 9 = 729 rows.
+ * Each column represents a constraint like for example "there exists a number 6 is in the column 2.
+ *
+ * @param mat Empty constrain 729x324 constraint matrix.
+ */
+void init_ec_matrix(bool **mat)
 {
   for (int row = 0; row < 9; row++)
   {
     for (int col = 0; col < 9; col++)
     {
+      // Get the box number. 9 boxes from left to right, top to bottom.
       int const box = col / 3 + (row / 3) * 3;
       for (int n = 0; n < 9; n++)
       {
@@ -53,7 +78,7 @@ void init_ec_matrix(bool mat[729][324])
  * @param cols Disabled cols from the matrix
  * @returns What the minimum number of true bools was
  */
-int find_col_min(IntList *const min_indices, bool const *const *const mat, int const height, int const width,
+int find_col_min(IntList *const min_indices, bool **mat, int const height, int const width,
                  bool const rows[], bool const cols[])
 {
   list_free(min_indices);
@@ -64,13 +89,11 @@ int find_col_min(IntList *const min_indices, bool const *const *const mat, int c
   {
     if (cols[col])
       continue;
-    int col_values = 0;
+    int col_values = height;
     for (int row = 0; row < height; row++)
     {
-      if (rows[row])
-        continue;
-      if (mat[row][col])
-        col_values++;
+      if (rows[row] || !mat[row][col])
+        col_values--;
     }
     if (col_values < min)
     {
@@ -129,6 +152,7 @@ void print_mat(bool const **mat, int const height, int const width, bool const r
 bool knuths_alg_x(bool **mat, int const height, int const width,
                   bool rows[], bool cols[], IntList *const selected)
 {
+
   // Check for empty matrix = solved
   bool empty = true;
   for (int i = 0; i < height; i++)
@@ -155,11 +179,17 @@ bool knuths_alg_x(bool **mat, int const height, int const width,
 
   // Find the columns with least selected values.
   IntList *col_min = list_new();
-  int col_min_val = find_col_min(col_min, (const bool **)mat, height, width, rows, cols);
+  int col_min_val = find_col_min(col_min, mat, height, width, rows, cols);
 
   // If one of the colums has no values = unsolvable
   if (col_min_val == 0)
+  {
+    // Free before return.
+    list_free(col_min);
+    free(col_min);
+    col_min = NULL;
     return false;
+  }
 
   // Start trying to solve with each of the selected columns.
   // Step 1 in the Wikipedia page algorithm.
@@ -192,23 +222,8 @@ bool knuths_alg_x(bool **mat, int const height, int const width,
       list_add(selected, row_index);
 
       // Remove columns of the selected row and the rows of the removed columns.
-      for (int col = 0; col < width; col++)
-      {
-        if (cols[col])
-          continue;
-        if (mat[row_index][col])
-        {
-          // Wiki page step 4.
-          cols[col] = true;
-          for (int r = 0; r < height; r++)
-          {
-            if (mat[r][col])
-            {
-              rows[r] = true;
-            }
-          }
-        }
-      }
+      // Wiki page step 4.
+      remove_rows_cols(mat, &rows[0], &cols[0], height, width, row_index);
 
       // Wiki page step 5.
       bool const ret = knuths_alg_x(mat, height, width, rows, cols, selected);
@@ -242,25 +257,72 @@ bool knuths_alg_x(bool **mat, int const height, int const width,
 }
 
 /**
- * https://en.wikipedia.org/wiki/Exact_cover#Sudoku
+ * Solves the given sudoku as an exact cover problem with the Knuth's Algorithm X.
+ * See https://en.wikipedia.org/wiki/Exact_cover#Sudoku
+ *
+ * @param sudoku Sudoku to solve
  */
 bool exact_cover(Sudoku *const sudoku)
 {
-
   if (!is_valid(sudoku))
-  {
     return false;
+
+  // Initialize the exact cover constraint matrix.
+  bool **mat;
+  mat = (bool **)malloc(sizeof(bool *) * 729);
+  for (int i = 0; i < 729; i++)
+  {
+    mat[i] = (bool *)malloc(sizeof(bool) * 324);
+    for (int j = 0; j < 324; j++)
+      mat[i][j] = false;
+  }
+  init_ec_matrix(mat);
+
+  // Initialize the removed rows arrays.
+  bool rows[729];
+  for (int i = 0; i < 729; i++)
+    rows[i] = false;
+  bool cols[324];
+  for (int i = 0; i < 324; i++)
+    cols[i] = false;
+
+  // Remove the rows and colums representing the number already set in the sudoku.
+  for (int col = 0; col < 9; col++)
+  {
+    for (int row = 0; row < 9; row++)
+    {
+      if (sudoku->locked[row][col])
+      {
+        // Get the matrix row for the row-column-number:
+        int const mat_row = sudoku->grid[row][col] - 1 + col * 9 + row * 81;
+        remove_rows_cols(mat, &rows[0], &cols[0], 729, 324, mat_row);
+      }
+    }
   }
 
-  bool m[729][324];
-  init_ec_matrix(m);
+  // Selected rows list.
+  IntList *selected = list_new();
 
-  IntList *locked = list_new();
+  // Solve the exact cover problem.
+  bool success = knuths_alg_x(mat, 729, 324, rows, cols, selected);
 
-  // TODO
+  // Set the selected values to the sudoku grid.
+  IntListIter *iter = selected->first;
+  while (iter != NULL)
+  {
+    int row, col, n;
+    ec_row_to_row_col_n(iter->val, &row, &col, &n);
+    sudoku->grid[row][col] = n;
+    iter = iter->next;
+  }
 
-  list_free(locked);
-  locked = NULL;
+  list_free(selected);
+  selected = NULL;
 
-  return false;
+  for (int i = 0; i < 729; i++)
+    free(mat[i]);
+  free(mat);
+  mat = NULL;
+
+  return success;
 }

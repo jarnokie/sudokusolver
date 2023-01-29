@@ -5,9 +5,11 @@
 #include "solver.h"
 #include "exactcover.h"
 
-
-enum Solver {backtracking = 0, exactcover = 1};
-
+enum Solver
+{
+  backtracking = 0,
+  exactcover = 1
+};
 
 /**
  * Fills a sudoku puzzle from the file given by the filename.
@@ -15,24 +17,30 @@ enum Solver {backtracking = 0, exactcover = 1};
  * @param filename Filename string
  * @param sudoku Pointer to the sudoku struct to be filled
  */
-int read_sudoku_file(char const * const filename, Sudoku * const sudoku);
+int read_sudoku_file(char const *const filename, Sudoku *const sudoku);
 
-
-int main (int argc, char **argv) {
-
+int main(int argc, char **argv)
+{
   enum Solver solver = backtracking;
 
   // Parse args
-  char * opts = "s:";
+  char *opts = "s:";
   int c = getopt(argc, argv, opts);
-  while(c != -1) {
-    if (c == 's') {
-      char const * solverArg = optarg;
-      if (strcmp(solverArg, "backtracking") == 0) {
+  while (c != -1)
+  {
+    if (c == 's')
+    {
+      char const *solverArg = optarg;
+      if (strcmp(solverArg, "backtracking") == 0)
+      {
         solver = backtracking;
-      } else if(strcmp(solverArg, "exactcover") == 0) {
+      }
+      else if (strcmp(solverArg, "exactcover") == 0)
+      {
         solver = exactcover;
-      } else {
+      }
+      else
+      {
         printf("Invalid solver: %s\n", solverArg);
         return 1;
       }
@@ -42,29 +50,31 @@ int main (int argc, char **argv) {
 
   // Read the sudoku file
   Sudoku sudoku;
-  char * filename = argv[optind];
-  if (filename == NULL) {
+  char *filename = argv[optind];
+  if (filename == NULL)
+  {
     printf("No sudoku file given!");
     return 1;
   }
   int err = read_sudoku_file(argv[optind], &sudoku);
-  if (err != 0) {
+  if (err != 0)
     return err;
-  }
 
   print_sudoku(&sudoku);
   printf("Solving...\n");
 
+  bool success = false;
+
   // Use the selected solver
-  if (solver == backtracking) {
-    bool const success = backtrack(&sudoku, 0, 0);
-    if (!success) {
-      printf("No solutions!");
-      return 1;
-    }
-  } else if (solver == exactcover) {
-    printf("TODO!\n");
-    bool const success = exact_cover(&sudoku);
+  if (solver == backtracking)
+    success = backtrack(&sudoku, 0, 0);
+  else if (solver == exactcover)
+    success = exact_cover(&sudoku);
+
+  if (!success)
+  {
+    printf("No solutions!");
+    return 1;
   }
 
   // Print the solution
@@ -73,22 +83,23 @@ int main (int argc, char **argv) {
   return 0;
 }
 
-
-int read_sudoku_file(char const * const filename, Sudoku * const sudoku) {
+int read_sudoku_file(char const *const filename, Sudoku *const sudoku)
+{
 
   initialize_sudoku(sudoku);
 
   FILE *fp = fopen(filename, "r");
 
-  if (fp == NULL) {
-      printf("Error: could not open file %s", filename);
-      return 1;
+  if (fp == NULL)
+  {
+    printf("Error: could not open file %s", filename);
+    return 1;
   }
 
   int c = fgetc(fp);
   int i = 0;
-  while(c != EOF) {
-
+  while (c != EOF)
+  {
     switch (c)
     {
     case '.':
@@ -100,9 +111,10 @@ int read_sudoku_file(char const * const filename, Sudoku * const sudoku) {
     case '\n':
       // Skip
       break;
-    
+
     default:
-      if (c >= '1' && c <= '9') {
+      if (c >= '1' && c <= '9')
+      {
         int const row = i / 9;
         int const col = i % 9;
         sudoku->grid[row][col] = c - '0';
