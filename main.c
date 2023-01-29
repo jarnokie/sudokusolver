@@ -11,6 +11,12 @@ enum Solver
   exactcover = 1
 };
 
+void print_help()
+{
+  printf("Usage: solver [-s solvername] sudokufile\n");
+  printf("Available solvers: 'backtracking' (default), 'exactcover'\n");
+}
+
 /**
  * Fills a sudoku puzzle from the file given by the filename.
  *
@@ -24,7 +30,7 @@ int main(int argc, char **argv)
   enum Solver solver = backtracking;
 
   // Parse args
-  char *opts = "s:";
+  char *opts = "hs:";
   int c = getopt(argc, argv, opts);
   while (c != -1)
   {
@@ -45,6 +51,11 @@ int main(int argc, char **argv)
         return 1;
       }
     }
+    else if (c == 'h')
+    {
+      print_help();
+      return 1;
+    }
     c = getopt(argc, argv, opts);
   }
 
@@ -53,7 +64,8 @@ int main(int argc, char **argv)
   char *filename = argv[optind];
   if (filename == NULL)
   {
-    printf("No sudoku file given!");
+    printf("No sudoku file given!\n");
+    print_help();
     return 1;
   }
   int err = read_sudoku_file(argv[optind], &sudoku);
