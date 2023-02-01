@@ -3,6 +3,6 @@
 
 #include <check.h>
 
-Suite * exact_cover_suite(void);
+Suite *exact_cover_suite(void);
 
 #endif

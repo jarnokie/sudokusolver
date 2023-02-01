@@ -4,8 +4,8 @@
 #include "test_list.h"
 #include "test_exact_cover.h"
 
-
-int main(void) {
+int main(void)
+{
   int number_failed;
   Suite *solver, *list, *exact_cover;
   SRunner *sr;
@@ -24,4 +24,3 @@ int main(void) {
 
   return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
-

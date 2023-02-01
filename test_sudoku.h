@@ -3,6 +3,6 @@
 
 #include <check.h>
 
-Suite * solver_suite(void);
+Suite *solver_suite(void);
 
 #endif

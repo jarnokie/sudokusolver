@@ -3,6 +3,6 @@
 
 #include <check.h>
 
-Suite * list_suite(void);
+Suite *list_suite(void);
 
 #endif
