@@ -114,18 +114,15 @@ int read_sudoku_file(char const *const filename, Sudoku *const sudoku)
   {
     switch (c)
     {
+    case '0':
     case '.':
       // Empty grid spot;
       i++;
       break;
 
-    case ' ':
-    case '\n':
-      // Skip
-      break;
-
     default:
-      if (c >= '1' && c <= '9')
+      // Check for numbers, otherwise skip
+      if ('1' <= c && c <= '9')
       {
         int const row = i / 9;
         int const col = i % 9;
