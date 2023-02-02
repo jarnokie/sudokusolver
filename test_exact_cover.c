@@ -208,6 +208,38 @@ START_TEST(test_exact_cover2)
   ck_assert_int_eq(sudoku.grid[1][1], 1);
 }
 
+START_TEST(test_exact_cover3)
+{
+  int const test_data[] = {
+      0, 0, 0, 0, 0, 0, 0, 7, 9,
+      8, 0, 5, 0, 7, 4, 1, 0, 0,
+      4, 6, 0, 1, 0, 0, 0, 2, 8,
+      0, 0, 0, 6, 5, 0, 9, 1, 0,
+      0, 0, 6, 9, 1, 7, 0, 0, 4,
+      0, 1, 9, 4, 3, 2, 0, 8, 7,
+      0, 0, 8, 2, 0, 6, 0, 4, 0,
+      6, 0, 2, 0, 0, 0, 0, 9, 1,
+      0, 0, 0, 5, 0, 0, 0, 0, 6};
+
+  Sudoku sudoku;
+  initialize_sudoku(&sudoku);
+
+  for (int r = 0; r < 9; r++)
+  {
+    for (int c = 0; c < 9; c++)
+    {
+      int n = test_data[r * 9 + c];
+      if (n > 0)
+      {
+        sudoku.grid[r][c] = n;
+        sudoku.locked[r][c] = true;
+      }
+    }
+  }
+
+  exact_cover(&sudoku);
+}
+
 Suite *exact_cover_suite(void)
 {
   Suite *s;
@@ -222,6 +254,7 @@ Suite *exact_cover_suite(void)
   tcase_add_test(tc_core, test_remove_rows_cols);
   tcase_add_test(tc_core, test_exact_cover1);
   tcase_add_test(tc_core, test_exact_cover2);
+  tcase_add_test(tc_core, test_exact_cover3);
 
   suite_add_tcase(s, tc_core);
 
