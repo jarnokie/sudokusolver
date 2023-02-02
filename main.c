@@ -85,7 +85,7 @@ int main(int argc, char **argv)
 
   if (!success)
   {
-    printf("No solutions!");
+    printf("No solutions!\n");
     return 1;
   }
 
@@ -110,7 +110,7 @@ int read_sudoku_file(char const *const filename, Sudoku *const sudoku)
 
   int c = fgetc(fp);
   int i = 0;
-  while (c != EOF)
+  while (c != EOF && i < 81)
   {
     switch (c)
     {
