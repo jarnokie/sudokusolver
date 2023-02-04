@@ -73,6 +73,13 @@ int main(int argc, char **argv)
     return err;
 
   print_sudoku(&sudoku);
+
+  if (!is_valid(&sudoku))
+  {
+    printf("Invalid sudoku problem!\n");
+    return 1;
+  }
+
   printf("Solving...\n");
 
   bool success = false;
