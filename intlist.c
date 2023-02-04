@@ -134,6 +134,7 @@ IntListIter *list_del_iter(IntListIter *iter, int const index)
     {
         next->previous = previous;
     }
+    return NULL;
 }
 
 /**
@@ -141,11 +142,13 @@ IntListIter *list_del_iter(IntListIter *iter, int const index)
  *
  * @param index Index to remove from the list
  * @param list Pointer to the list
- * @returns Pointer to the list, null if list empty
+ * @return The removed value, 0 if invalid index
  */
-void list_del(IntList *list, int const index)
+int list_del(IntList *list, int const index)
 {
+    int const val = list_get(list, index);
     list->first = list_del_iter(list->first, index);
+    return val;
 }
 
 /**
