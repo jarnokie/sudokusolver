@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "intlist.h"
 #include "solver.h"
 #include "exactcover.h"
@@ -13,6 +14,11 @@ void copy_arr(bool const from[], bool to[], int const n)
   }
 }
 
+/**
+ * Removes the rows and columns defined by the given row. The given row is added to the
+ * removed rows. Then all of the columns which the row has set value are also removed.
+ * For each column that is removed also the columns set rows are removed.
+ */
 void remove_rows_cols(bool **mat, bool *rows, bool *cols, int const height, int const width, int const row)
 {
   for (int c = 0; c < width; c++)
@@ -29,6 +35,14 @@ void remove_rows_cols(bool **mat, bool *rows, bool *cols, int const height, int 
   }
 }
 
+/**
+ * Given a row from the sudoku exact cover problem matrix finds out the sudoku row, column
+ * and number that the row represents.
+ * @param mat_row Exact cover contraint matrix row.
+ * @param row Pointer to an int to which write the sudoku row.
+ * @param col Pointer to an int to which write the sudoku column.
+ * @param row Pointer to an int to which write the sudoku number.
+ */
 void ec_row_to_row_col_n(int const mat_row, int *row, int *col, int *n)
 {
   *n = (mat_row % 9) + 1;
@@ -53,14 +67,15 @@ void init_ec_matrix(bool **mat)
       int const box = col / 3 + (row / 3) * 3;
       for (int n = 0; n < 9; n++)
       {
+        int const mat_row = row * 81 + col * 9 + n;
         // row-column constraint
-        mat[row * 81 + col * 9 + n][row * 9 + col] = true;
+        mat[mat_row][row * 9 + col] = true;
         // row-number constraint
-        mat[row * 81 + col * 9 + n][81 + row * 9 + n] = true;
+        mat[mat_row][81 + row * 9 + n] = true;
         // column-number constraint
-        mat[row * 81 + col * 9 + n][162 + col * 9 + n] = true;
+        mat[mat_row][162 + col * 9 + n] = true;
         // box-number constraint
-        mat[row * 81 + col * 9 + n][243 + box * 9 + n] = true;
+        mat[mat_row][243 + box * 9 + n] = true;
       }
     }
   }
@@ -78,13 +93,12 @@ void init_ec_matrix(bool **mat)
  * @param cols Disabled cols from the matrix
  * @returns What the minimum number of true bools was
  */
-int find_col_min(IntList *const min_indices, bool **mat, int const height, int const width,
-                 bool const rows[], bool const cols[])
+int find_col_min(IntList *const min_indices, bool **mat, int const height, int const width, bool const rows[], bool const cols[])
 {
   list_free(min_indices);
   int min = height;
 
-  // Find the columns with most values
+  // Find the columns with least values
   for (int col = 0; col < width; col++)
   {
     if (cols[col])
@@ -149,10 +163,8 @@ void print_mat(bool const **mat, int const height, int const width, bool const r
  * @param selected List of selected rows.
  * @returns True if matrix was solved, false otherwise.
  */
-bool knuths_alg_x(bool **mat, int const height, int const width,
-                  bool rows[], bool cols[], IntList *const selected)
+bool knuths_alg_x(bool **mat, int const height, int const width, bool rows[], bool cols[], IntList *const selected)
 {
-
   // Check for empty matrix = solved
   bool empty = true;
   for (int i = 0; i < height; i++)
@@ -203,7 +215,7 @@ bool knuths_alg_x(bool **mat, int const height, int const width,
     copy_arr(rows, rows_old, height);
     copy_arr(cols, cols_old, width);
 
-    // Find rows which have 1 set for the selected column
+    // Find rows which have 1 set for the selected column (step 2)
     IntList *row_indices = list_new();
     for (int row = 0; row < height; row++)
     {
@@ -213,10 +225,11 @@ bool knuths_alg_x(bool **mat, int const height, int const width,
         list_add(row_indices, row);
     }
 
-    // Step 2 in the Wikipedia page algorithm.
-    for (int i = 0; i < list_length(row_indices); i++)
+    // Step 3 in the Wikipedia page algorithm.
+    while (list_length(row_indices) > 0)
     {
-      int const row_index = list_get(row_indices, i);
+      // Select random row from the list and remove it (so it does not get selected again)
+      int const row_index = list_del(row_indices, rand() % list_length(row_indices));
       rows[row_index] = true;
 
       list_add(selected, row_index);
@@ -230,9 +243,14 @@ bool knuths_alg_x(bool **mat, int const height, int const width,
       if (ret)
       {
         // Free before return.
+        list_free(row_indices);
+        free(row_indices);
+        row_indices = NULL;
+
         list_free(col_min);
         free(col_min);
         col_min = NULL;
+
         return true;
       }
 
@@ -264,8 +282,12 @@ bool knuths_alg_x(bool **mat, int const height, int const width,
  */
 bool exact_cover(Sudoku *const sudoku)
 {
+  // Just return for invalid
   if (!is_valid(sudoku))
     return false;
+
+  // Set seed for random generation
+  srand(time(NULL));
 
   // Initialize the exact cover constraint matrix.
   bool **mat;

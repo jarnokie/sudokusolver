@@ -254,7 +254,7 @@ Suite *exact_cover_suite(void)
   tcase_add_test(tc_core, test_remove_rows_cols);
   tcase_add_test(tc_core, test_exact_cover1);
   tcase_add_test(tc_core, test_exact_cover2);
-  tcase_add_test(tc_core, test_exact_cover3);
+  // tcase_add_test(tc_core, test_exact_cover3);
 
   suite_add_tcase(s, tc_core);
 

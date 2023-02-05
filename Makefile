@@ -1,7 +1,8 @@
 SOURCES = solver.c intlist.c exactcover.c
+CFLAGS = -Wall -O2 -g -pg
 
 solver: $(SOURCES:.c=.o) main.c
-	gcc -o $@ -Wall -Wextra -g $^
+	gcc -o $@ -Wall -Wextra -g -pg $^
 
 test: $(SOURCES:.c=.o) test*.c
 	gcc -o $@ -Wall -Wextra -DUNIT_TEST $^ -lcheck -lsubunit -lm
