@@ -6,6 +6,9 @@
 #include "solver.h"
 #include "exactcover.h"
 
+/* Allow the Knuth's algorith X to recurese max 1000 times. */
+static const int MAX_RECURSION = 1000;
+
 void copy_arr(bool const from[], bool to[], int const n)
 {
   for (int i = 0; i < n; i++)
@@ -150,10 +153,10 @@ void print_mat(bool const **mat, int const height, int const width, bool const r
 }
 
 /**
- * https://en.wikipedia.org/wiki/Knuth%27s_Algorithm_X
- *
  * Solves the matrix 'mat' with the Knuth's Algorithm X. Selected rows are set to the 'selected' list.
  * To pre-select rows add them to the selected list and mark them removed in the rows array.
+ *
+ * @link https://en.wikipedia.org/wiki/Knuth%27s_Algorithm_X
  *
  * @param mat Matrix to solve.
  * @param height Height of the matrix.
@@ -163,8 +166,14 @@ void print_mat(bool const **mat, int const height, int const width, bool const r
  * @param selected List of selected rows.
  * @returns True if matrix was solved, false otherwise.
  */
-bool knuths_alg_x(bool **mat, int const height, int const width, bool rows[], bool cols[], IntList *const selected)
+bool knuths_alg_x(bool **mat, int const height, int const width, bool rows[], bool cols[], IntList *const selected, int *iter)
 {
+  // Try until MAX_ITERS recursion has reached
+  if (*iter >= MAX_RECURSION)
+    return false;
+
+  *iter += 1;
+
   // Check for empty matrix = solved
   bool empty = true;
   for (int i = 0; i < height; i++)
@@ -239,7 +248,7 @@ bool knuths_alg_x(bool **mat, int const height, int const width, bool rows[], bo
       remove_rows_cols(mat, &rows[0], &cols[0], height, width, row_index);
 
       // Wiki page step 5.
-      bool const ret = knuths_alg_x(mat, height, width, rows, cols, selected);
+      bool const ret = knuths_alg_x(mat, height, width, rows, cols, selected, iter);
       if (ret)
       {
         // Free before return.
@@ -325,8 +334,10 @@ bool exact_cover(Sudoku *const sudoku)
   // Selected rows list.
   IntList *selected = list_new();
 
+  int iters = 0;
+
   // Solve the exact cover problem.
-  bool success = knuths_alg_x(mat, 729, 324, rows, cols, selected);
+  bool success = knuths_alg_x(mat, 729, 324, rows, cols, selected, &iters);
 
   // Set the selected values to the sudoku grid.
   IntListIter *iter = selected->first;

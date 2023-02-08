@@ -86,7 +86,8 @@ START_TEST(test_knuths_algorithm_x1)
   bool rows[] = {false, false, false, false, false, false};
   bool cols[] = {false, false, false, false, false, false, false};
 
-  knuths_alg_x(mat, row_count, col_count, rows, cols, selected);
+  int recurs = 0;
+  knuths_alg_x(mat, row_count, col_count, rows, cols, selected, &recurs);
 
   ck_assert_int_eq(list_length(selected), 3);
   ck_assert_int_eq(list_contains(selected, 1), true);
@@ -126,7 +127,8 @@ START_TEST(test_knuths_algorithm_x2)
   bool cols[] = {false, false, false, false, false, false, false};
   remove_rows_cols(mat, &rows[0], &cols[0], row_count, col_count, 3);
 
-  knuths_alg_x(mat, row_count, col_count, rows, cols, selected);
+  int recurs = 0;
+  knuths_alg_x(mat, row_count, col_count, rows, cols, selected, &recurs);
 
   ck_assert_int_eq(list_length(selected), 2);
   ck_assert_int_eq(list_contains(selected, 1), true);
@@ -237,7 +239,7 @@ START_TEST(test_exact_cover3)
     }
   }
 
-  exact_cover(&sudoku);
+  ck_assert_int_eq(exact_cover(&sudoku), false);
 }
 
 Suite *exact_cover_suite(void)
@@ -254,7 +256,7 @@ Suite *exact_cover_suite(void)
   tcase_add_test(tc_core, test_remove_rows_cols);
   tcase_add_test(tc_core, test_exact_cover1);
   tcase_add_test(tc_core, test_exact_cover2);
-  // tcase_add_test(tc_core, test_exact_cover3);
+  tcase_add_test(tc_core, test_exact_cover3);
 
   suite_add_tcase(s, tc_core);
 
