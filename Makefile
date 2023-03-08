@@ -1,4 +1,4 @@
-SOURCES = solver.c intlist.c exactcover.c
+SOURCES = solver.c intlist.c exactcover.c intprogramming.c
 CFLAGS = -Wall -O2 -g
 
 solver: $(SOURCES:.c=.o) main.c
@@ -7,14 +7,6 @@ solver: $(SOURCES:.c=.o) main.c
 test: $(SOURCES:.c=.o) test*.c
 	gcc -o $@ -Wall -Wextra -DUNIT_TEST $^ -lcheck -lsubunit -lm
 
-solver.exe: $(SOURCES:.c=.o) main.c
-	gcc -o $@ -Wall -Wextra -g $^
-
-test.exe: $(SOURCES:.c=.o) test*.c
-	gcc -o $@ -Wall -Wextra -DUNIT_TEST $^ -lcheck -lm
-
 clean:
 	$(RM) *.o test.exe test solver.exe solver
 
-winclean:
-	del *.o test.exe test solver.exe solver
