@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <check.h>
 
-#include "exactcover.h"
-#include "intlist.h"
+#include "../exactcover.h"
+#include "../intlist.h"
 
 /**
  * Helper funtion for getting the Wikipedia problem values.

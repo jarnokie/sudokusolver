@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <check.h>
-#include "intlist.h"
+#include "../intlist.h"
 
 START_TEST(test_add)
 {

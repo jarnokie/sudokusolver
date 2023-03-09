@@ -2,8 +2,8 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
-#include "solver.h"
-#include "exactcover.h"
+#include "../lib/solver.h"
+#include "../lib/exactcover.h"
 
 enum Solver
 {

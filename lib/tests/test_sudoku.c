@@ -1,5 +1,5 @@
 #include <check.h>
-#include "solver.h"
+#include "../solver.h"
 
 void set_test_sudoku(Sudoku *const sudoku)
 {
